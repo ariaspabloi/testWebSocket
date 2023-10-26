@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+
+  <body>
+    <main><span>Cronometro </span> <span id="stopwatch">00:00:00</span></main>
+    <footer>
+      <script></script>
+      <script src="/socket.io/socket.io.js"></script>
+      <script>
+        let startTime = 0; // Initialize the start time
+        let stopwatchInterval; // Interval ID
+        let elapsedPausedTime = 0; // Elapsed paused time
+
+        function startStopwatch() {
+          if (!stopwatchInterval) {
+            startTime = Date.now() - elapsedPausedTime;
+            stopwatchInterval = setInterval(updateStopwatch, 1000);
+          }
+        }
+
+        function stopStopwatch() {
+          if (stopwatchInterval) {
+            clearInterval(stopwatchInterval);
+            elapsedPausedTime += Date.now() - startTime;
+            stopwatchInterval = null;
+          }
+        }
+
+        function resetStopwatch() {
+          stopStopwatch();
+          elapsedPausedTime = 0;
+          startTime = 0; // Reset the start time
+          updateStopwatch(); // Update the display
+        }
+
+        function updateStopwatch() {
+          const currentTime = Date.now();
+          const elapsedTime = currentTime - startTime + elapsedPausedTime;
+          const seconds = Math.floor((elapsedTime / 1000) % 60);
+          const minutes = Math.floor((elapsedTime / 1000 / 60) % 60);
+          const hours = Math.floor(elapsedTime / 1000 / 60 / 60);
+          const displayTime =
+            pad(hours) + ":" + pad(minutes) + ":" + pad(seconds);
+          document.getElementById("stopwatch").textContent = displayTime;
+        }
+
+        function pad(number) {
+          return (number < 10 ? "0" : "") + number;
+        }
+
+        const socket = io();
+
+        const form = document.getElementById("form");
+        const input = document.getElementById("input");
+        const messages = document.getElementById("messages");
+
+        const newUserConnected = (user) => {
+          userName = user || `User${Math.floor(Math.random() * 1000000)}`;
+          socket.emit("new user", userName);
+          addToUsersBox(userName);
+        };
+
+        socket.on("new user", function (data) {
+          alert("conectado");
+        });
+
+        socket.on("control", function (data) {
+          console.log(data);
+          data ? startStopwatch() : stopStopwatch();
+        });
+      </script>
+    </footer>
+  </body>
+</html>
